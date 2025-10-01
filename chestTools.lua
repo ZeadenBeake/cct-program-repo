@@ -6,7 +6,7 @@ cfg = { target = peripheral.wrap("top") }
 
 if fs.exists("/cfg/chestTools.cfg") then
     configFile = fs.open("/cfg/chestTools.cfg", "r")
-    for key, value in string.gmatch(configFile.readAll(), "(%w+)=(%w+)") do
+    for key, value in string.gmatch(configFile.readAll(), "(.+)=(.+)") do
         cfg[key] = peripheral.wrap(value)
     end
     configFile.close()
@@ -119,4 +119,5 @@ else
     print("fetch - Looks for the specified item (mod:name, see search) and fetches the specified number of items into a designated output chest. (Defined in chestTools.cfg)")
     print("flush - Empties the output chest into the storage system.")
 end  
+
 
