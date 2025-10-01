@@ -105,12 +105,18 @@ elseif command == "flush" then
             end
         end
     end
+elseif command == "info" then
+    print("Author: ZeadenBeake")
+    print("Version: 1.1.1")
+    print("Date Written: 2025-10-01")
 else
     print("Invalid command specified.")
     print("Commands:")
+    print("info - Prints some info about the software.")
     print("audit - Searches through all connected chests and returns everything it finds.")
     print("search - Looks for the specified item (mod:name, eg minecraft:raw_copper) and displays every chest it's found in, if any.")
     print("config - Sets a value in the configuration file. View /cfg/chestTools.cfg for configuration values.")
     print("fetch - Looks for the specified item (mod:name, see search) and fetches the specified number of items into a designated output chest. (Defined in chestTools.cfg)")
     print("flush - Empties the output chest into the storage system.")
 end  
+
