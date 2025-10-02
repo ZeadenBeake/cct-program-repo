@@ -29,24 +29,15 @@ end
 command, arg, set = ...
 
 if command == "audit" then
+    if not (term.isColor() and fs.exists("/lua/chestTools.daemon.lua")) then
+        error("Audit is not supported on this device. Make sure that the computer is an Advanced computer, and that there is an advanced monitor connected. If the system is set up correctly, try reinstalling chestTools and trying again.", 0)
+    end
+    
     monitor.clear()
     monitor.setTextScale(0.5)
     monitor.setCursorBlink(false)
-    for _, chest in pairs(chests) do
-        for slot, item in pairs(chest.list()) do
-            if contents[item.name] then
-                contents[item.name] = contents[item.name] + item.count
-            else
-                contents[item.name] = item.count
-            end
-        end
-    end
     
-    for name, count in pairs(contents) do
-        monitor.setCursorPos(1, yPos)
-        monitor.write(("%dx %s"):format(count, name))
-        yPos = yPos + 1
-    end
+    shell.run("bg /lua/chestTools.daemon.lua")        
 elseif command == "search" then
     for id, chest in pairs(chests) do
         for slot, item in pairs(chest.list()) do
@@ -125,9 +116,9 @@ elseif command == "flush" then
         ::next::
     end
 elseif command == "info" then
-    print("Version: 1.1.4")
-    print("Version date: 2025-10-1")
-    print("Author: ZeadenBeake")
+    print("Version: 1.2.0")
+    print("Version date: 2025-10-2")
+    print("Author: Zeaden Beake")
 else
     print("Invalid command specified.")
     print("Commands:")
