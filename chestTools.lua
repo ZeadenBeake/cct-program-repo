@@ -90,7 +90,7 @@ elseif command == "fetch" then
         if countToFetch == 0 then
             break
         end
-        if not cfg.target == chest then
+        if not (cfg.target == chest) then
             for slot, item in pairs(chest.list()) do
                 if item.name == arg then
                     fetched = true
