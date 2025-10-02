@@ -120,7 +120,7 @@ elseif command == "info" then
     print("Version date: 2025-10-2")
     print("Author: Zeaden Beake")
 else
-    print("Invalid command specified.")
+    if command ~= nil then print("Invalid command specified.") end
     print("Commands:")
     print("info - Prints out some info about the software.")
     print("audit - Searches through all connected chests and returns everything it finds.")
@@ -129,4 +129,3 @@ else
     print("fetch - Looks for the specified item (mod:name, see search) and fetches the specified number of items into a designated output chest. (Defined in chestTools.cfg)")
     print("flush - Empties the output chest into the storage system.")
 end
-
