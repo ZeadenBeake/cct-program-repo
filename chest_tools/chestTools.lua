@@ -2,18 +2,18 @@ chests = { peripheral.find("minecraft:chest") }
 monitor = peripheral.find("monitor")
 yPos = 1
 contents = {}
-cfg = { target = peripheral.wrap("top") }
+cfg = { target = "top", auditMonitor = "left", auditRate = 5 }
 
 if fs.exists("/cfg/chestTools.cfg") then
     configFile = fs.open("/cfg/chestTools.cfg", "r")
     for key, value in string.gmatch(configFile.readAll(), "(.+)=(.+)") do
-        cfg[key] = peripheral.wrap(value)
+        cfg[key] = value
     end
     configFile.close()
 else
     configFile = fs.open("/cfg/chestTools.cfg", "w")
     for key, value in pairs(cfg) do
-        configFile.write(key .. "=" .. peripheral.getName(value))
+        configFile.write(key .. "=" .. value .. ",")
     end
     configFile.close()
 end
@@ -49,24 +49,25 @@ elseif command == "search" then
 elseif command == "config" then
     if arg == "target" then
         if set then
-            cfg.target = peripheral.wrap(set)
+            cfg.target = set
             configFile = fs.open("/cfg/chestTools.cfg", "w")
             for key, value in pairs(cfg) do
                 configFile.write(key .. "=" .. set)
             end
             configFile.close()
         else
-            print(peripheral.getName(cfg.target))
+            print(cfg.target)
         end
     else
         print("Invalid value.")
     end
 elseif command == "fetch" then
     if not set then set = 64 end
+    target = peripheral.wrap(cfg.target)
     fetched = false
     countFetched = 0
     countToFetch = set
-    for slot, item in pairs(cfg.target.list()) do
+    for slot, item in pairs(target.list()) do
         if item.name == arg then
             fetched = true
             fetchCount = math.clamp(countToFetch, 0, item.count)
@@ -90,7 +91,7 @@ elseif command == "fetch" then
                     print(("%dx %s found in chest %s slot %d, fetching %d."):format(item.count, item.name, id, slot, fetchCount))
                     countToFetch = countToFetch - fetchCount
                     countFetched = countFetched + fetchCount
-                    cfg.target.pullItems(peripheral.getName(chest), slot, fetchCount)
+                    target.pullItems(peripheral.getName(chest), slot, fetchCount)
                     if countToFetch == 0 then
                         break
                     end
@@ -106,10 +107,11 @@ elseif command == "fetch" then
         print("Fetched Successfully!")
     end
 elseif command == "flush" then
-    for slot, item in pairs(cfg.target.list()) do
+    target = peripheral.wrap(cfg.target)
+    for slot, item in pairs(target.list()) do
         for id, chest in pairs(chests) do
             if chest ~= cfg.target then
-                cfg.target.pushItems(peripheral.getName(chest), slot)
+                target.pushItems(peripheral.getName(chest), slot)
                 goto next
             end
         end
