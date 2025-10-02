@@ -21,7 +21,7 @@ if fs.exists("/lib/scrollable.lua") then
     if not compatible then
         print("scrollable library incompatible, updating...")
         fs.delete("/lib/scrollable.lua")
-        shell.run("wget https://github.com/ZeadenBeake/cct-program-repo/blob/main/lib/scrollable.lua /lib/scrollable.lua")
+        shell.run("wget https://raw.githubusercontent.com/ZeadenBeake/cct-program-repo/refs/heads/main/lib/scrollable.lua /lib/scrollable.lua")
     end
 else
     shell.run("wget https://raw.githubusercontent.com/ZeadenBeake/cct-program-repo/refs/heads/main/lib/scrollable.lua /lib/scrollable.lua")
