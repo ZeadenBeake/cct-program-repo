@@ -32,7 +32,7 @@ parallel.waitForAny(
     function()
         while true do
             local lines = search()
-            file = fs.open("ct_daemon.txt", "w")
+            file = fs.open("/lua/ct_daemon.txt", "w")
             for i, line in pairs(lines) do
                 file.write(line)
             end
@@ -42,6 +42,6 @@ parallel.waitForAny(
         end
     end,
     function()
-        scrollable.start(monitor, "ct_daemon.txt", 5, {file = true})
+        scrollable.start(monitor, "/lua/ct_daemon.txt", 5, {file = true})
     end
 )
