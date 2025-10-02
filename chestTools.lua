@@ -71,6 +71,7 @@ elseif command == "config" then
         print("Invalid value.")
     end
 elseif command == "fetch" then
+    if not set then set = 64 end
     fetched = false
     countFetched = 0
     countToFetch = set
@@ -90,7 +91,7 @@ elseif command == "fetch" then
         if countToFetch == 0 then
             break
         end
-        if not (cfg.target == chest) then
+        if not (peripheral.getName(cfg.target) == peripheral.getName(chest)) then
             for slot, item in pairs(chest.list()) do
                 if item.name == arg then
                     fetched = true
