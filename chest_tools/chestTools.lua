@@ -13,7 +13,7 @@ if fs.exists("/cfg/chestTools.cfg") then
 else
     configFile = fs.open("/cfg/chestTools.cfg", "w")
     for key, value in pairs(cfg) do
-        configFile.write(key .. "=" .. perihperal.getName(value))
+        configFile.write(key .. "=" .. peripheral.getName(value))
     end
     configFile.close()
 end
@@ -129,3 +129,4 @@ else
     print("fetch - Looks for the specified item (mod:name, see search) and fetches the specified number of items into a designated output chest. (Defined in chestTools.cfg)")
     print("flush - Empties the output chest into the storage system.")
 end
+
