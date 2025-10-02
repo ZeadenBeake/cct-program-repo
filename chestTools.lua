@@ -6,7 +6,7 @@ cfg = { target = peripheral.wrap("top") }
 
 if fs.exists("/cfg/chestTools.cfg") then
     configFile = fs.open("/cfg/chestTools.cfg", "r")
-    for key, value in string.gmatch(configFile.readAll(), "(.+)=(.+)") do
+    for key, value in string.gmatch(configFile.readAll(), "(%w+)=(%w+)") do
         cfg[key] = peripheral.wrap(value)
     end
     configFile.close()
@@ -74,17 +74,34 @@ elseif command == "fetch" then
     fetched = false
     countFetched = 0
     countToFetch = set
+    for slot, item in pairs(cfg.target.list()) do
+        if item.name == arg then
+            fetched = true
+            fetchCount = math.clamp(countToFetch, 0, item.count)
+            print(("%dx %s already found in target chest, skipping %d items."):format(item.count, item.name, fetchCount))
+            countToFetch = countToFetch - fetchCount
+            countFetched = countFetched + fetchCount
+            if countToFetch == 0 then
+                break
+            end
+        end
+    end
     for id, chest in pairs(chests) do
-        for slot, item in pairs(chest.list()) do
-            if item.name == arg then
-                fetched = true
-                fetchCount = math.clamp(countToFetch, 0, item.count)
-                print(("%dx %s found in chest %s slot %d, fetching %d."):format(item.count, item.name, id, slot, fetchCount))
-                countToFetch = countToFetch - fetchCount
-                countFetched = countFetched + fetchCount
-                cfg.target.pullItems(peripheral.getName(chest), slot, fetchCount)
-                if countToFetch == 0 then
-                    break
+        if countToFetch == 0 then
+            break
+        end
+        if not cfg.target == chest then
+            for slot, item in pairs(chest.list()) do
+                if item.name == arg then
+                    fetched = true
+                    fetchCount = math.clamp(countToFetch, 0, item.count)
+                    print(("%dx %s found in chest %s slot %d, fetching %d."):format(item.count, item.name, id, slot, fetchCount))
+                    countToFetch = countToFetch - fetchCount
+                    countFetched = countFetched + fetchCount
+                    cfg.target.pullItems(peripheral.getName(chest), slot, fetchCount)
+                    if countToFetch == 0 then
+                        break
+                    end
                 end
             end
         end
@@ -97,27 +114,25 @@ elseif command == "fetch" then
         print("Fetched Successfully!")
     end
 elseif command == "flush" then
-    target = cfg.target
-    for slot, item in pairs(target.list()) do
+    for slot, item in pairs(cfg.target.list()) do
         for id, chest in pairs(chests) do
-            if chest ~= target then
-                target.pushItems(peripheral.getName(chest), slot)
+            if chest ~= cfg.target then
+                cfg.target.pushItems(peripheral.getName(chest), slot)
             end
         end
     end
 elseif command == "info" then
+    print("Version: 1.1.3")
+    print("Version date: 2025-10-1")
     print("Author: ZeadenBeake")
-    print("Version: 1.1.1")
-    print("Date Written: 2025-10-01")
 else
     print("Invalid command specified.")
     print("Commands:")
-    print("info - Prints some info about the software.")
+    print("info - Prints out some info about the software.")
     print("audit - Searches through all connected chests and returns everything it finds.")
     print("search - Looks for the specified item (mod:name, eg minecraft:raw_copper) and displays every chest it's found in, if any.")
     print("config - Sets a value in the configuration file. View /cfg/chestTools.cfg for configuration values.")
     print("fetch - Looks for the specified item (mod:name, see search) and fetches the specified number of items into a designated output chest. (Defined in chestTools.cfg)")
     print("flush - Empties the output chest into the storage system.")
 end  
-
 
