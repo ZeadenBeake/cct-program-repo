@@ -6,7 +6,7 @@ cfg = { target = peripheral.wrap("top") }
 
 if fs.exists("/cfg/chestTools.cfg") then
     configFile = fs.open("/cfg/chestTools.cfg", "r")
-    for key, value in string.gmatch(configFile.readAll(), "(%w+)=(%w+)") do
+    for key, value in string.gmatch(configFile.readAll(), "(.+)=(.+)") do
         cfg[key] = peripheral.wrap(value)
     end
     configFile.close()
