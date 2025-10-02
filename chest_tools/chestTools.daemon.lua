@@ -27,7 +27,8 @@ local passed, err = pcall(peripheral.getName, monitor)
 if passed then print("Monitor is valid.") else error("Invalid monitor: " .. err) end
 
 print("Starting Monitor...")
-local file = 0
+local file = fs.open("/lua/ct_daemon.txt", "w")
+file.close()
 parallel.waitForAny(
     function()
         while true do
