@@ -118,11 +118,13 @@ elseif command == "flush" then
         for id, chest in pairs(chests) do
             if chest ~= cfg.target then
                 cfg.target.pushItems(peripheral.getName(chest), slot)
+                goto next
             end
         end
+        ::next::
     end
 elseif command == "info" then
-    print("Version: 1.1.3")
+    print("Version: 1.1.4")
     print("Version date: 2025-10-1")
     print("Author: ZeadenBeake")
 else
@@ -134,5 +136,4 @@ else
     print("config - Sets a value in the configuration file. View /cfg/chestTools.cfg for configuration values.")
     print("fetch - Looks for the specified item (mod:name, see search) and fetches the specified number of items into a designated output chest. (Defined in chestTools.cfg)")
     print("flush - Empties the output chest into the storage system.")
-end  
-
+end
