@@ -41,7 +41,7 @@ if command == "audit" then
 elseif command == "search" then
     for id, chest in pairs(chests) do
         for slot, item in pairs(chest.list()) do
-            if item.name == arg then
+            if string.match(item.name, arg) then
                 print(("%dx %s found in chest %s slot %d"):format(item.count, item.name, id, slot))
             end
         end
@@ -118,7 +118,7 @@ elseif command == "flush" then
         ::next::
     end
 elseif command == "info" then
-    print("Version: 1.2.1")
+    print("Version: 1.2.2")
     print("Version date: 2025-10-3")
     print("Author: Zeaden Beake")
 else
@@ -131,4 +131,5 @@ else
     print("fetch - Looks for the specified item (mod:name, see search) and fetches the specified number of items into a designated output chest. (Defined in chestTools.cfg)")
     print("flush - Empties the output chest into the storage system.")
 end
+
 
