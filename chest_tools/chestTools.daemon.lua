@@ -5,7 +5,7 @@ local scrollable = require("scrollable")
 cfg = {}
 
 configFile = fs.open("/cfg/chestTools.cfg", "r")
-for key, value in string.gmatch(configFile.readAll(), "(.-)=(.-),") do
+for key, value in string.gmatch(configFile.readAll(), "(.-)=(.-)\n") do
     cfg[key] = value
     --print(key, value)
 end
@@ -20,10 +20,10 @@ function search()
         for slot, item in pairs(chest.list()) do
             if contents[item.name] then
                 contents[item.name] = contents[item.name] + item.count
-                print(item.count .. " more " .. item.name .. " found.")
+                --print(item.count .. " more " .. item.name .. " found.")
             else
                 contents[item.name] = item.count
-                print("Added " .. item.count .. "x " .. item.name .. " to the list.")
+                --print("Added " .. item.count .. "x " .. item.name .. " to the list.")
             end
         end
     end
@@ -43,6 +43,7 @@ file.close()
 parallel.waitForAny(
     function()
         while true do
+            --print("Refreshing inventory...")
             local lines = search()
             file = fs.open("/lua/ct_daemon.txt", "w")
             for i, line in pairs(lines) do
