@@ -1,4 +1,4 @@
--- Scrollable library v1.0.0
+-- Scrollable library v1.0.1
 -- Author: Zeaden Beake
 -- Scrollable allows users to easily make a scrollable list on a monitor. The monitor must support touch inputs.
 
