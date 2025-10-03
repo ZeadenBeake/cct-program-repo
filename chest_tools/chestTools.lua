@@ -6,7 +6,7 @@ cfg = { target = "top", auditMonitor = "left", auditRate = 5 }
 
 if fs.exists("/cfg/chestTools.cfg") then
     configFile = fs.open("/cfg/chestTools.cfg", "r")
-    for key, value in string.gmatch(configFile.readAll(), "(.+)=(.+)") do
+    for key, value in string.gmatch(configFile.readAll(), "(.-)=(.-)") do
         cfg[key] = value
     end
     configFile.close()
@@ -47,16 +47,16 @@ elseif command == "search" then
         end
     end
 elseif command == "config" then
-    if arg == "target" then
+    if cfg[arg] then
         if set then
-            cfg.target = set
+            cfg[arg] = set
             configFile = fs.open("/cfg/chestTools.cfg", "w")
             for key, value in pairs(cfg) do
                 configFile.write(key .. "=" .. set)
             end
             configFile.close()
         else
-            print(cfg.target)
+            print(cfg[arg])
         end
     else
         print("Invalid value.")
