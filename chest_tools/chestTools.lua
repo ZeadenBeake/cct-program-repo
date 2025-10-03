@@ -116,8 +116,8 @@ elseif command == "flush" then
         ::next::
     end
 elseif command == "info" then
-    print("Version: 1.2.0")
-    print("Version date: 2025-10-2")
+    print("Version: 1.2.1")
+    print("Version date: 2025-10-3")
     print("Author: Zeaden Beake")
 else
     if command ~= nil then print("Invalid command specified.") end
@@ -129,3 +129,4 @@ else
     print("fetch - Looks for the specified item (mod:name, see search) and fetches the specified number of items into a designated output chest. (Defined in chestTools.cfg)")
     print("flush - Empties the output chest into the storage system.")
 end
+
