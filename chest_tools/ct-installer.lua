@@ -6,6 +6,10 @@ if fs.exists("/chestTools.lua") or fs.exists("/lua/chestTools.daemon.lua") then
     end
 end
 
+print("What branch do you want to download? Leave empty for the main branch (reccomended).")
+branch = io.read()
+if not branch then branch = "main" end
+
 if fs.exists("/chestTools.lua") then fs.delete("/chestTools.lua") end
 if fs.exists("/lua/chestTools.daemon.lua") then fs.delete("/lua/chestTools.daemon.lua") end
 if fs.exists("/lib/scrollable.lua") then
@@ -21,14 +25,14 @@ if fs.exists("/lib/scrollable.lua") then
     if not compatible then
         print("scrollable library incompatible, updating...")
         fs.delete("/lib/scrollable.lua")
-        shell.run("wget https://raw.githubusercontent.com/ZeadenBeake/cct-program-repo/refs/heads/main/lib/scrollable.lua /lib/scrollable.lua")
+        shell.run("wget https://raw.githubusercontent.com/ZeadenBeake/cct-program-repo/refs/heads/" .. branch .. "/lib/scrollable.lua /lib/scrollable.lua")
     end
 else
-    shell.run("wget https://raw.githubusercontent.com/ZeadenBeake/cct-program-repo/refs/heads/main/lib/scrollable.lua /lib/scrollable.lua")
+    shell.run("wget https://raw.githubusercontent.com/ZeadenBeake/cct-program-repo/refs/heads/" .. branch .. "/lib/scrollable.lua /lib/scrollable.lua")
 end
 
-shell.run("wget https://raw.githubusercontent.com/ZeadenBeake/cct-program-repo/refs/heads/main/chest_tools/chestTools.lua /chestTools.lua")
-shell.run("wget https://raw.githubusercontent.com/ZeadenBeake/cct-program-repo/refs/heads/main/chest_tools/chestTools.daemon.lua /lua/chestTools.daemon.lua")
+shell.run("wget https://raw.githubusercontent.com/ZeadenBeake/cct-program-repo/refs/heads/" .. branch .. "/chest_tools/chestTools.lua /chestTools.lua")
+shell.run("wget https://raw.githubusercontent.com/ZeadenBeake/cct-program-repo/refs/heads/" .. branch .. "/chest_tools/chestTools.daemon.lua /lua/chestTools.daemon.lua")
 
 print("Installtion complete!")
 print("Try running \"chestTools\" to see available commands to get started.")
