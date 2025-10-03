@@ -30,8 +30,8 @@ function lib.start(monitor, input, step, settings)
     monitor.clear()
     print("Initializing monitor...")
     for i = 1, sizeY, 1 do
-        monitor.setCursorPos(1, i)
         if lines[i] ~= nil then
+            monitor.setCursorPos(1, i)
             monitor.write(lines[i])
         end
     end
@@ -54,8 +54,8 @@ function lib.start(monitor, input, step, settings)
             end
             
             for i = 1, sizeY, 1 do
-                monitor.setCursorPos(1, i)
                 if lines[scroll + i - 1] ~= nil then
+                    monitor.setCursorPos(1, i)
                     monitor.write(lines[scroll + i - 1])
                 end
             end
