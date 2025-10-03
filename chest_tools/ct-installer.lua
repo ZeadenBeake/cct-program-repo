@@ -8,7 +8,7 @@ end
 
 print("What branch do you want to download? Leave empty for the main branch (reccomended).")
 branch = io.read()
-if not branch then branch = "main" end
+if (not branch) or (branch == "") then branch = "main" end
 
 if fs.exists("/chestTools.lua") then fs.delete("/chestTools.lua") end
 if fs.exists("/lua/chestTools.daemon.lua") then fs.delete("/lua/chestTools.daemon.lua") end
