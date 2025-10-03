@@ -1,4 +1,4 @@
--- Scrollable library v1.0.0
+-- Scrollable library v1.0.1
 -- Author: Zeaden Beake
 -- Scrollable allows users to easily make a scrollable list on a monitor. The monitor must support touch inputs.
 
@@ -14,6 +14,7 @@ local lib = {}
 lib["features"] = {"vertical_1"}
 
 function lib.start(monitor, input, step, settings)
+    monitor = peripheral.wrap(monitor)
     if not settings then settings = {} end
     sizeX, sizeY = monitor.getSize()
     scroll = 1
@@ -30,13 +31,14 @@ function lib.start(monitor, input, step, settings)
     monitor.clear()
     print("Initializing monitor...")
     for i = 1, sizeY, 1 do
-        monitor.setCursorPos(1, i)
         if lines[i] ~= nil then
+            monitor.setCursorPos(1, i)
             monitor.write(lines[i])
         end
     end
     print("Monitor initialized.")
     
+
     while true do
         event, id, touchX, touchY = os.pullEvent()
         --print(event, id)
@@ -54,13 +56,13 @@ function lib.start(monitor, input, step, settings)
             end
             
             for i = 1, sizeY, 1 do
-                monitor.setCursorPos(1, i)
                 if lines[scroll + i - 1] ~= nil then
+                    monitor.setCursorPos(1, i)
                     monitor.write(lines[scroll + i - 1])
                 end
             end
         elseif event == "scroll_update" then
-            if id == monitor then
+            if id == peripheral.getName(monitor) then
                 if settings.file then
                     oldLines = lines
                     lines = {}
@@ -70,8 +72,8 @@ function lib.start(monitor, input, step, settings)
                     if lines ~= oldLines then
                         monitor.clear()
                         for i = 1, sizeY, 1 do
-                            monitor.setCursorPos(1, i)
                             if lines[scroll + i - 1] ~= nil then
+                                monitor.setCursorPos(1, i)
                                 monitor.write(lines[scroll + i - 1])
                             end
                         end
