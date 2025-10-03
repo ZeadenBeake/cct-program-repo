@@ -1,4 +1,4 @@
--- Chest Tools Daemon v1.0.0
+-- Chest Tools Daemon
 -- Author: Zeaden Beake
 package.path = package.path .. ";/lib/?.lua"
 local scrollable = require("scrollable")
