@@ -70,8 +70,8 @@ function lib.start(monitor, input, step, settings)
                     if lines ~= oldLines then
                         monitor.clear()
                         for i = 1, sizeY, 1 do
-                            monitor.setCursorPos(1, i)
                             if lines[scroll + i - 1] ~= nil then
+                                monitor.setCursorPos(1, i)
                                 monitor.write(lines[scroll + i - 1])
                             end
                         end
