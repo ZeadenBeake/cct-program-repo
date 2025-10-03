@@ -43,19 +43,20 @@ file.close()
 parallel.waitForAny(
     function()
         while true do
-            --print("Refreshing inventory...")
+            print("Refreshing inventory...")
             local lines = search()
             file = fs.open("/lua/ct_daemon.txt", "w")
             for i, line in pairs(lines) do
                 file.write(line)
             end
             file.close()
-            os.queueEvent("scroll_update", monitor)
+            os.queueEvent("scroll_update", peripheral.getName(monitor))
+            print("Refreshed.")
             sleep(tonumber(cfg.auditRate))
         end
     end,
     function()
         print("Outputting to " .. peripheral.getName(monitor))
-        scrollable.start(monitor, "/lua/ct_daemon.txt", 5, {file = true})
+        scrollable.start(peripheral.getName(monitor), "/lua/ct_daemon.txt", 5, {file = true})
     end
 )
