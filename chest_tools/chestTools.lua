@@ -13,7 +13,7 @@ if fs.exists("/cfg/chestTools.cfg") then
 else
     configFile = fs.open("/cfg/chestTools.cfg", "w")
     for key, value in pairs(cfg) do
-        configFile.write(key .. "=" .. value .. ",")
+        configFile.write(key .. "=" .. value .. "\n")
     end
     configFile.close()
 end
@@ -47,12 +47,12 @@ elseif command == "search" then
         end
     end
 elseif command == "config" then
-    if cfg[arg] then
+    if cfg[arg] ~= nil then
         if set then
             cfg[arg] = set
             configFile = fs.open("/cfg/chestTools.cfg", "w")
             for key, value in pairs(cfg) do
-                configFile.write(key .. "=" .. set)
+                configFile.write(key .. "=" .. value .. "\n")
             end
             configFile.close()
         else
