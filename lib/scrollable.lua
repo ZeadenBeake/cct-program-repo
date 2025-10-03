@@ -14,6 +14,7 @@ local lib = {}
 lib["features"] = {"vertical_1"}
 
 function lib.start(monitor, input, step, settings)
+    monitor = peripheral.wrap(monitor)
     if not settings then settings = {} end
     sizeX, sizeY = monitor.getSize()
     scroll = 1
@@ -37,6 +38,7 @@ function lib.start(monitor, input, step, settings)
     end
     print("Monitor initialized.")
     
+
     while true do
         event, id, touchX, touchY = os.pullEvent()
         --print(event, id)
@@ -60,7 +62,7 @@ function lib.start(monitor, input, step, settings)
                 end
             end
         elseif event == "scroll_update" then
-            if id == monitor then
+            if id == peripheral.getName(monitor) then
                 if settings.file then
                     oldLines = lines
                     lines = {}
