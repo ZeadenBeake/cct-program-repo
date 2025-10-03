@@ -6,7 +6,7 @@ cfg = { target = "top", auditMonitor = "left", auditRate = 5 }
 
 if fs.exists("/cfg/chestTools.cfg") then
     configFile = fs.open("/cfg/chestTools.cfg", "r")
-    for key, value in string.gmatch(configFile.readAll(), "(.-)=(.-)") do
+    for key, value in string.gmatch(configFile.readAll(), "(.-)=(.-)\n") do
         cfg[key] = value
     end
     configFile.close()
@@ -83,7 +83,7 @@ elseif command == "fetch" then
         if countToFetch == 0 then
             break
         end
-        if not (peripheral.getName(cfg.target) == peripheral.getName(chest)) then
+        if not (cfg.target == peripheral.getName(chest)) then
             for slot, item in pairs(chest.list()) do
                 if item.name == arg then
                     fetched = true
