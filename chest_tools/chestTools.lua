@@ -2,7 +2,7 @@ chests = { peripheral.find("minecraft:chest") }
 monitor = peripheral.find("monitor")
 yPos = 1
 contents = {}
-cfg = { target = "top", auditMonitor = "left", auditRate = 5 }
+cfg = { target = "top", auditMonitor = "left", auditRate = "5", fetchSearch = "false" }
 
 if fs.exists("/cfg/chestTools.cfg") then
     configFile = fs.open("/cfg/chestTools.cfg", "r")
@@ -24,11 +24,13 @@ function math.clamp(n, low, high)
         error("Inputs cannot be nil.", 2)
     end
     return math.min(math.max(n, low), high)
-end 
+end
+stringtoboolean={ ["true"] = true, ["false"] = false}
 
-command, arg, set = ...
+--command, arg, set = ...
+args = { ... }
 
-if command == "audit" then
+if args[1] == "audit" then
     if not (term.isColor() and fs.exists("/lua/chestTools.daemon.lua")) then
         error("Audit is not supported on this device. Make sure that the computer is an Advanced computer, and that there is an advanced monitor connected. If the system is set up correctly, try reinstalling chestTools and trying again.", 0)
     end
@@ -38,37 +40,51 @@ if command == "audit" then
     monitor.setCursorBlink(false)
     
     shell.run("bg /lua/chestTools.daemon.lua")        
-elseif command == "search" then
+elseif args[1] == "search" then
     for id, chest in pairs(chests) do
         for slot, item in pairs(chest.list()) do
-            if string.match(item.name, arg) then
+            if string.match(item.name, args[2]) then
                 print(("%dx %s found in chest %s slot %d"):format(item.count, item.name, id, slot))
             end
         end
     end
-elseif command == "config" then
-    if cfg[arg] ~= nil then
+elseif args[1] == "config" then
+    if cfg[args[2]] ~= nil then
         if set then
-            cfg[arg] = set
+            cfg[args[2]] = set
             configFile = fs.open("/cfg/chestTools.cfg", "w")
             for key, value in pairs(cfg) do
                 configFile.write(key .. "=" .. value .. "\n")
             end
             configFile.close()
         else
-            print(cfg[arg])
+            print(cfg[args[2]])
         end
     else
         print("Invalid value.")
     end
-elseif command == "fetch" then
-    if not set then set = 64 end
+elseif args[1] == "fetch" then
+    if (not args[3]) or args[3] == "." then args[3] = 64 end
     target = peripheral.wrap(cfg.target)
     fetched = false
     countFetched = 0
-    countToFetch = set
+    countToFetch = args[3]
     for slot, item in pairs(target.list()) do
-        if item.name == arg then
+        exact = true
+        if args[4] == "exact" then
+            exact = true
+        elseif args[4] == "search" then
+            exact = false
+        else
+            exact = not stringtoboolean[cfg.fetchSearch]
+        end
+        match = false
+        if exact then
+            match = (item.name == args[2])
+        else
+            match = (string.match(item.name, args[2]) ~= nil)
+        end
+        if match then
             fetched = true
             fetchCount = math.clamp(countToFetch, 0, item.count)
             print(("%dx %s already found in target chest, skipping %d items."):format(item.count, item.name, fetchCount))
@@ -79,13 +95,28 @@ elseif command == "fetch" then
             end
         end
     end
+    print("Fetching from " .. #chests .. " chests...")
     for id, chest in pairs(chests) do
         if countToFetch == 0 then
             break
         end
-        if not (cfg.target == peripheral.getName(chest)) then
+        if cfg.target ~= peripheral.getName(chest) then
             for slot, item in pairs(chest.list()) do
-                if item.name == arg then
+                exact = true
+                if args[4] == "exact" then
+                    exact = true
+                elseif args[4] == "search" then
+                    exact = false
+                else
+                    exact = not stringtoboolean[cfg.fetchSearch]
+                end
+                match = false
+                if exact then
+                    match = (item.name == args[2])
+                else
+                    match = (string.match(item.name, args[2]) ~= nil)
+                end
+                if match then
                     fetched = true
                     fetchCount = math.clamp(countToFetch, 0, item.count)
                     print(("%dx %s found in chest %s slot %d, fetching %d."):format(item.count, item.name, id, slot, fetchCount))
@@ -102,27 +133,32 @@ elseif command == "fetch" then
     if not fetched then
         print("Could not find target item.")
     elseif countToFetch ~= 0 then
-        print(("Partial fetch. Found %d out of %d items."):format(countFetched, set))
+        print(("Partial fetch. Found %d out of %d items."):format(countFetched, args[3]))
     else
         print("Fetched Successfully!")
     end
-elseif command == "flush" then
+elseif args[1] == "flush" then
     target = peripheral.wrap(cfg.target)
     for slot, item in pairs(target.list()) do
         for id, chest in pairs(chests) do
             if chest ~= cfg.target then
-                target.pushItems(peripheral.getName(chest), slot)
-                goto next
+                num = target.pushItems(peripheral.getName(chest), slot)
+                if num == item.count then
+                    goto next
+                else
+                    goto retry
+                end
             end
+            ::retry::
         end
         ::next::
     end
-elseif command == "info" then
-    print("Version: 1.2.2")
+elseif args[1] == "info" then
+    print("Version: 1.3.0")
     print("Version date: 2025-10-3")
     print("Author: Zeaden Beake")
 else
-    if command ~= nil then print("Invalid command specified.") end
+    if args[1] ~= nil then print("Invalid command specified.") end
     print("Commands:")
     print("info - Prints out some info about the software.")
     print("audit - Searches through all connected chests and returns everything it finds.")
@@ -131,5 +167,3 @@ else
     print("fetch - Looks for the specified item (mod:name, see search) and fetches the specified number of items into a designated output chest. (Defined in chestTools.cfg)")
     print("flush - Empties the output chest into the storage system.")
 end
-
-
