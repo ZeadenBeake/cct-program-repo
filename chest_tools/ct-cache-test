@@ -1,0 +1,55 @@
+rednet.open("right")
+rednet.broadcast({type="ping", source = "client:test"}, "ct-client")
+server, message = rednet.receive("ct-server", 15)
+if not server then error("No Response.", 0) end
+print("Heard from server " .. server .. " named " .. message.source)
+print("Update the cache?")
+io.write("> ")
+option = io.read()
+if option == "y" then
+    rednet.send(server, {
+        type = "request",
+        source = "client:test",
+        msg = "update"
+    }, "ct-client")
+    server, message = rednet.receive("ct-server", 15)
+    for key, value in pairs(message) do
+        print(key, value)
+    end
+    sleep(1)
+else
+    print("Skipping update.")
+end
+rednet.send(server, {
+    type = "request",
+    source = "client:test",
+    msg = "cache"
+}, "ct-client")
+waiting = true
+while waiting do
+    server, message = rednet.receive("ct-server", 15)
+    if not server then
+        error("Timed out.", 0)
+    end
+    if message.msg ~= "Server is busy..." then
+        waiting = false
+    else
+        print("Waiting...")
+    end
+end
+print("Got the cache!")
+for key, value in pairs(message) do
+    print(key, value)
+end
+print("Printing out the cache in 3 seconds...")
+sleep(3)
+cache = message.data
+for key, value in pairs(cache) do
+    strOut = ""
+    for _, each in pairs(value) do
+        tblOut = ("%s,%s,%s"):format(each[1], each[2], each[3])
+        strOut = strOut .. tblOut .. "|"
+    end
+    strOut = strOut:sub(1, -2)
+    print(key .. "=" .. strOut .. "\n")
+end
