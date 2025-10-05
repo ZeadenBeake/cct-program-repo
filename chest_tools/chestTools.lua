@@ -2,7 +2,12 @@ chests = { peripheral.find("minecraft:chest") }
 monitor = peripheral.find("monitor")
 yPos = 1
 contents = {}
-cfg = { target = "top", auditMonitor = "left", auditRate = "5", fetchSearch = "false" }
+cfg = { target = "top", auditMonitor = "left", auditRate = "5", fetchSearch = "false", authPassword="admin", caching=false, cacheServer="" }
+embed = false
+
+os.pullEvent = os.pullEventRaw
+
+::loop::
 
 if fs.exists("/cfg/chestTools.cfg") then
     configFile = fs.open("/cfg/chestTools.cfg", "r")
@@ -26,9 +31,27 @@ function math.clamp(n, low, high)
     return math.min(math.max(n, low), high)
 end
 stringtoboolean={ ["true"] = true, ["false"] = false}
+function auth(passwd)
+    if (passwd == cfg.authPassword) or cfg.authPassword == "" then
+        return true
+    else
+        return false
+    end
+end
 
+args = { }
 --command, arg, set = ...
-args = { ... }
+if embed then
+    io.write("> ")
+    usrIn = string.gmatch(io.read(), "[^%s]+")
+    i = 1
+    for arg in usrIn do
+        args[i] = arg
+        i = i + 1
+    end 
+else
+    args = { ... }
+end
 
 if args[1] == "audit" then
     if not (term.isColor() and fs.exists("/lua/chestTools.daemon.lua")) then
@@ -41,12 +64,22 @@ if args[1] == "audit" then
     
     shell.run("bg /lua/chestTools.daemon.lua")        
 elseif args[1] == "search" then
+    results = {}
     for id, chest in pairs(chests) do
         for slot, item in pairs(chest.list()) do
             if string.match(item.name, args[2]) then
-                print(("%dx %s found in chest %s slot %d"):format(item.count, item.name, id, slot))
+                --print(("%dx %s found in chest %s slot %d"):format(item.count, item.name, id, slot))
+                if results[item.name] then
+                    results[item.name] = results[item.name] + item.count
+                else
+                    results[item.name] = item.count
+                end
             end
         end
+    end
+    print("Items found:")
+    for item, count in pairs(results) do
+        print(count .. "x " .. item)
     end
 elseif args[1] == "config" then
     if cfg[args[2]] ~= nil then
@@ -157,6 +190,16 @@ elseif args[1] == "info" then
     print("Version: 1.3.0")
     print("Version date: 2025-10-3")
     print("Author: Zeaden Beake")
+elseif args[1] == "embed" then
+    if args[2] == "start" then
+        embed = true
+    elseif args[2] == "exit" then
+        if auth(args[3]) then
+            embed = false
+        else
+            print("Failed to authenticate.")
+        end
+    end
 else
     if args[1] ~= nil then print("Invalid command specified.") end
     print("Commands:")
@@ -166,4 +209,8 @@ else
     print("config - Sets a value in the configuration file. View /cfg/chestTools.cfg for configuration values.")
     print("fetch - Looks for the specified item (mod:name, see search) and fetches the specified number of items into a designated output chest. (Defined in chestTools.cfg)")
     print("flush - Empties the output chest into the storage system.")
+end
+
+if embed then
+    goto loop
 end
