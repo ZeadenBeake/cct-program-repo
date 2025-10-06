@@ -100,9 +100,8 @@ coro_reply = coroutine.create(function ()
         if buffer[1] then
             source = buffer[1].source
             message = buffer[1].message
-            print(buffer[1])
-            print(source, message)
             table.remove(buffer, 1)
+            print(message.type, message.source)
             if message.type == "request" then
                 if message.msg == "cache" then
                     while busy do
@@ -115,6 +114,7 @@ coro_reply = coroutine.create(function ()
                         data = cache
                     }
                     rednet.send(source, draft, "ct-server")
+                    print("Gave cache to " .. message.source)
                 elseif message.msg == "update" then
                     draft = {
                         type = "txt",
@@ -122,8 +122,35 @@ coro_reply = coroutine.create(function ()
                         msg = "Updating cache..."
                     }
                     rednet.send(source, draft, "ct-server")
+                    print("Refreshing cache as asked by " .. message.source)
                     os.queueEvent("refresh_cache")
                     --coroutine.yield()
+                elseif message.msg == "lookup" then
+                    draft = {
+                        type = "txt",
+                        source = "server:" .. cfg.name,
+                        msg = ignored[message.data]
+                    }
+                    print("Gave " .. message.source .. " " .. message.data .. "'s target chest name.")
+                end
+            elseif message.type == "submit" then
+                if message.msg == "cache" then
+                    draft = {
+                        type = "txt",
+                        source = "server" .. cfg.name,
+                        msg = "Update recieved."
+                    }
+                    rednet.send(source, draft, "ct-server")
+                    cache = message.data
+                elseif message.msg == "register" then
+                    draft = {
+                        type = "txt",
+                        source = "server:" .. cfg.name,
+                        msg = "Adding " .. message.source .. " to target-ignore list."
+                    }
+                    rednet.send(source, draft, "ct-server")
+                    ignored[message.source] = message.data
+                    print("Added " .. message.source .. "'s target to ignore list.")
                 end
             elseif message.type == "ping" then
                 draft = {
@@ -157,8 +184,7 @@ parallel.waitForAny(
         while true do
             local src, msg = rednet.receive("ct-client")
             table.insert(buffer, {source=src, message=msg})
-            print("Got message!")
-            print(src, msg)
+            print("Got message from " .. src)
             coroutine.resume(coro_reply)
         end
     end,
@@ -179,3 +205,4 @@ parallel.waitForAny(
         end
     end
 )
+
