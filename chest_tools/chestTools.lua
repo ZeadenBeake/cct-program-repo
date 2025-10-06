@@ -19,8 +19,6 @@ local cache = {}
 
 os.pullEvent = os.pullEventRaw
 
-::loop::
-
 if fs.exists("/cfg/chestTools.cfg") then
     configFile = fs.open("/cfg/chestTools.cfg", "r")
     for key, value in string.gmatch(configFile.readAll(), "(.-)=(.-)\n") do
@@ -53,8 +51,8 @@ function auth(passwd)
     end
 end
 
-function getCache()
-    if #cache > 0 then
+function getCache(force)
+    if (#cache > 0) and not force then
         return cache
     else
         local server, message = {}
@@ -78,6 +76,25 @@ function getCache()
             end
         end
         return message.data
+    end
+end
+
+function updateCache()
+    if #cache == 0 then
+        return false, "Cache is empty!"
+    end
+    rednet.send(server, {
+        type = "submit",
+        source = "client:" .. cfg.clientName,
+        msg = "cache",
+        data = cache
+    }, "ct-client")
+    print("Waiting for reply...")
+    local replySrv, reply = rednet.receive("ct-server", 5)
+    if reply == "Update recieved." then
+        return true
+    else
+        return reply.msg
     end
 end
 
@@ -127,11 +144,23 @@ if stringtoboolean[cfg.caching] then
     end
     if (message.source == "server:" .. cfg.cacheServer) or (cfg.cacheServer == "any")  then
         cacheServer = server
+        repeat
+            rednet.send(server, {
+                type = "submit",
+                source = "client:" .. cfg.clientName,
+                msg = "register",
+                data = target
+            }, "ct-client")
+            replySrv, reply = rednet.receive("ct-server", 5)
+            if not replySrv then print("Waiting for reply...") end
+        until(replySrv == cacheServer)
+        cache = getCache()
     end
 end
 
 ::cacheSkip::
 
+::loop::
 args = { }
 --command, arg, set = ...
 if embed then
@@ -209,54 +238,8 @@ elseif args[1] == "fetch" then
     target = peripheral.wrap(cfg.target)
     fetched = false
     countFetched = 0
-    countToFetch = args[3]
-    if not stringtoboolean[cfg.caching] then
-        for slot, item in pairs(target.list()) do
-            exact = true
-            if args[4] == "exact" then
-                exact = true
-            elseif args[4] == "search" then
-                exact = false
-            else
-                exact = not stringtoboolean[cfg.fetchSearch]
-            end
-            match = false
-            if exact then
-                match = (item.name == args[2])
-            else
-                match = (string.match(item.name, args[2]) ~= nil)
-            end
-            if match then
-                fetched = true
-                fetchCount = math.clamp(countToFetch, 0, item.count)
-                print(("%dx %s already found in target chest, skipping %d items."):format(item.count, item.name, fetchCount))
-                countToFetch = countToFetch - fetchCount
-                countFetched = countFetched + fetchCount
-                if countToFetch == 0 then
-                    break
-                end
-            end
-        end
-    else
-        target = peripheral.wrap(cfg.target)
-        for slot, item in pairs(target.list()) do
-            for id, chest in pairs(chests) do
-                if chest ~= cfg.target then
-                    num = target.pushItems(peripheral.getName(chest), slot)
-                    if num == item.count then
-                        goto next
-                    else
-                        goto retry
-                    end
-                end
-                ::retry::
-            end
-            ::next::
-        end
-    end
-    print("Fetching from " .. #chests .. " chests...")
-    if stringtoboolean[cfg.caching] then
-        items = getCache()
+    countToFetch = tonumber(args[3])
+    for slot, item in pairs(target.list()) do
         exact = true
         if args[4] == "exact" then
             exact = true
@@ -265,61 +248,137 @@ elseif args[1] == "fetch" then
         else
             exact = not stringtoboolean[cfg.fetchSearch]
         end
+        match = false
         if exact then
-            match = (items[args[2]])
-            if match then
-                for index, stack in pairs(items[args[2]]) do
-                    fetched = true
-                    fetchCount = math.clamp(countToFetch, 0, item.count)
-                    print(("%dx %s found in chest %s slot %d, fetching %d."):format(item.count, item.name, id, slot, fetchCount))
-                    countToFetch = countToFetch - fetchCount
-                    countFetched = countFetched + fetchCount
-                    target.pullItems(peripheral.getName(chest), slot, fetchCount)
-                end
-            end
+            match = (item.name == args[2])
         else
-            for item, stack in pairs(items) do
-                if string.match(item.name, args[2]) ~= nil then
-                    fetched = true
-                    fetchCount = math.clamp(countToFetch, 0, item.count)
-                    print(("%dx %s found in chest %s slot %d, fetching %d."):format(item.count, item.name, id, slot, fetchCount))
-                    countToFetch = countToFetch - fetchCount
-                    countFetched = countFetched + fetchCount
-                    target.pullItems(peripheral.getName(chest), slot, fetchCount)
-                end
-            end
+            match = (string.match(item.name, args[2]) ~= nil)
         end
-        
-    else
-        for id, chest in pairs(chests) do
+        if match then
+            fetched = true
+            fetchCount = math.clamp(countToFetch, 0, item.count)
+            print(("%dx %s already found in target chest, skipping %d items."):format(item.count, item.name, fetchCount))
+            countToFetch = countToFetch - fetchCount
+            countFetched = countFetched + fetchCount
             if countToFetch == 0 then
                 break
             end
-            if cfg.target ~= peripheral.getName(chest) then
-                for slot, item in pairs(chest.list()) do
-                    exact = true
-                    if args[4] == "exact" then
-                        exact = true
-                    elseif args[4] == "search" then
-                        exact = false
-                    else
-                        exact = not stringtoboolean[cfg.fetchSearch]
-                    end
-                    match = false
-                    if exact then
-                        match = (item.name == args[2])
-                    else
-                        match = (string.match(item.name, args[2]) ~= nil)
-                    end
-                    if match then
+        end
+    end
+    local diff = false
+    if countToFetch > 0 then
+        diff = true
+        print("Fetching from " .. #chests .. " chests...")
+        if stringtoboolean[cfg.caching] then
+            exact = true
+            if args[4] == "exact" then
+                exact = true
+            elseif args[4] == "search" then
+                exact = false
+            else
+                exact = not stringtoboolean[cfg.fetchSearch]
+            end
+            if exact then
+                --match = (items[args[2]])
+                --[[
+                if match then
+                    for index, stack in pairs(items[args[2]-]) do
                         fetched = true
                         fetchCount = math.clamp(countToFetch, 0, item.count)
                         print(("%dx %s found in chest %s slot %d, fetching %d."):format(item.count, item.name, id, slot, fetchCount))
                         countToFetch = countToFetch - fetchCount
                         countFetched = countFetched + fetchCount
                         target.pullItems(peripheral.getName(chest), slot, fetchCount)
-                        if countToFetch == 0 then
-                            break
+                    end
+                end
+                --]]
+                for name, stacks in pairs(cache) do
+                    match = (name == args[2])
+                    if match then
+                        for index, stack in ipairs(stacks) do
+                            fetched = true
+                            fetchCount = math.clamp(countToFetch, 0, stack[1])
+                            print(("%dx %s found in chest %s slot %d, fetching %d."):format(stack[1], name, stack[2], stack[3], fetchCount))
+                            countToFetch = countToFetch - fetchCount
+                            countFetched = countFetched + fetchCount
+                            target.pullItems(peripheral.getName(chests[tonumber(stack[2])]), tonumber(stack[3]), fetchCount)
+                            cache[name][index][1] = tonumber(stack[1]) - countFetched
+                            if cache[name][index][1] <= 0 then
+                                table.remove(cache[name], index)
+                            end
+                            if countToFetch <= 0 then goto outExact end
+                        end
+                        ::outExact::
+                        if countToFetch <= 0 then break end
+                    end
+                end
+            else
+                --[[
+                match = (string.match(item.name, args[2]) ~= nil)
+                for item, stack in pairs(items) do
+                    if string.match(item.name, args[2]) ~= nil then
+                        fetched = true
+                        fetchCount = math.clamp(countToFetch, 0, item.count)
+                        print(("%dx %s found in chest %s slot %d, fetching %d."):format(item.count, item.name, id, slot, fetchCount))
+                        countToFetch = countToFetch - fetchCount
+                        countFetched = countFetched + fetchCount
+                        target.pullItems(peripheral.getName(chest), slot, fetchCount)
+                    end
+                end
+                --]]
+                for name, stacks in pairs(cache) do
+                    match = (string.match(name, args[2]) ~= nil)
+                    if match then
+                        for index, stack in ipairs(stacks) do
+                            fetched = true
+                            fetchCount = math.clamp(countToFetch, 0, stack[1])
+                            print(("%dx %s found in chest %s slot %d, fetching %d."):format(stack[1], name, stack[2], stack[3], fetchCount))
+                            countToFetch = countToFetch - fetchCount
+                            countFetched = countFetched + fetchCount
+                            target.pullItems(peripheral.getName(chests[tonumber(stack[2])]), tonumber(stack[3]), fetchCount)
+                            cache[name][index][1] = tonumber(stack[1]) - countFetched
+                            if cache[name][index][1] <= 0 then
+                                table.remove(cache[name], index)
+                            end
+                            if countToFetch <= 0 then goto outSearch end
+                        end
+                        ::outSearch::
+                        if countToFetch <= 0 then break end
+                    end
+                end
+            end
+            
+        else
+            for id, chest in pairs(chests) do
+                if countToFetch == 0 then
+                    break
+                end
+                if cfg.target ~= peripheral.getName(chest) then
+                    for slot, item in pairs(chest.list()) do
+                        exact = true
+                        if args[4] == "exact" then
+                            exact = true
+                        elseif args[4] == "search" then
+                            exact = false
+                        else
+                            exact = not stringtoboolean[cfg.fetchSearch]
+                        end
+                        match = false
+                        if exact then
+                            match = (item.name == args[2])
+                        else
+                            match = (string.match(item.name, args[2]) ~= nil)
+                        end
+                        if match then
+                            fetched = true
+                            fetchCount = math.clamp(countToFetch, 0, item.count)
+                            print(("%dx %s found in chest %s slot %d, fetching %d."):format(item.count, item.name, id, slot, fetchCount))
+                            countToFetch = countToFetch - fetchCount
+                            countFetched = countFetched + fetchCount
+                            target.pullItems(peripheral.getName(chest), slot, fetchCount)
+                            if countToFetch == 0 then
+                                break
+                            end
                         end
                     end
                 end
@@ -332,6 +391,16 @@ elseif args[1] == "fetch" then
         print(("Partial fetch. Found %d out of %d items."):format(countFetched, args[3]))
     else
         print("Fetched Successfully!")
+    end
+    if fetched and diff then
+        rednet.send(server, {
+            type = "submit",
+            source = "client:" .. cfg.clientName,
+            msg = "cache",
+            data = cache
+        }, "ct-client")
+        print("Updating server's cache...")
+        replySrv, reply = rednet.receive("ct-server", 5)
     end
 elseif args[1] == "flush" then
     target = peripheral.wrap(cfg.target)
@@ -348,6 +417,37 @@ elseif args[1] == "flush" then
             ::retry::
         end
         ::next::
+    end
+    --[[
+    This is a BAD solution. Ideally I should try and track *where* exactly the items go,
+    but without sorting the server-side cache I just can't know for sure right now. A
+    problem for future me to solve- for now, this will do. I'm only considering it even
+    remotely acceptable because "flush" will likely only be sent once the user is done
+    interacting with the system for now, and as such the wait won't be too much of an
+    issue. I hope.
+    --]]
+    rednet.send(cacheServer, {
+        type="request",
+        source="client:" .. cfg.clientName,
+        msg="update"
+    }, "ct-client")
+    rednet.receive("ct-server")
+    cache = getCache(true)
+elseif args[1] == "cache" then
+    if cfg.caching then
+        if args[2] == "update" then
+            rednet.send(cacheServer, {
+                type="request",
+                source="client:" .. cfg.clientName,
+                msg="update"
+            }, "ct-client")
+            rednet.receive("ct-server")
+            cache = getCache(true)
+        elseif args[2] == "clear" then
+            cache = {}
+        end  
+    else
+        print("Caching is not enabled.")
     end
 elseif args[1] == "info" then
     print("Version: 1.3.0")
