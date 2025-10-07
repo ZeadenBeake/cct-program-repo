@@ -392,7 +392,8 @@ elseif args[1] == "fetch" then
     else
         print("Fetched Successfully!")
     end
-    if fetched and diff then
+    print(cfg.caching)
+    if fetched and diff and cfg.caching then
         rednet.send(server, {
             type = "submit",
             source = "client:" .. cfg.clientName,
@@ -426,13 +427,15 @@ elseif args[1] == "flush" then
     interacting with the system for now, and as such the wait won't be too much of an
     issue. I hope.
     --]]
-    rednet.send(cacheServer, {
-        type="request",
-        source="client:" .. cfg.clientName,
-        msg="update"
-    }, "ct-client")
-    rednet.receive("ct-server")
-    cache = getCache(true)
+    if cfg.caching then
+        rednet.send(cacheServer, {
+            type="request",
+            source="client:" .. cfg.clientName,
+            msg="update"
+        }, "ct-client")
+        rednet.receive("ct-server")
+        cache = getCache(true)
+    end
 elseif args[1] == "cache" then
     if cfg.caching then
         if args[2] == "update" then
