@@ -3,11 +3,13 @@ ignored = { }
 cfg = { side = "left", name="Keep Storage Cache" }
 buffer = { }
 cache = { }
-busy = false
+busy = true
+termReady = true
 
 function updateCache()
     cache = { }
     busy = true
+    termReady = false
     for id, chest in pairs(chests) do
         for slot, item in pairs(chest.list()) do
             sleep(0.05)
@@ -35,6 +37,7 @@ function updateCache()
     end
     cacheFile.close()
     busy = false
+    termReady = true
     print("Update finished!")
     os.queueEvent("done")
     coroutine.resume(coro_reply)
@@ -170,7 +173,23 @@ end)
 parallel.waitForAny(
     function()
         coroutine.resume(coro_reply)
-        io.read()
+        print("Console started!")
+        while true do
+            if termReady then
+                io.write("> ")
+                console = string.lower(io.read())
+                if console == "update" then
+                    print("Refreshing cache...")
+                    os.queueEvent("refresh_cache")
+                elseif console == "shutdown" then
+                    print("Goodbye!")
+                    return true
+                end
+            else
+                coroutine.yield()
+            end
+            sleep(0.1)
+        end
     end,
     function()
         while true do
@@ -196,8 +215,10 @@ parallel.waitForAny(
                     source = "server:" .. cfg.name,
                     msg = "Server is busy..."
                 }
-                rednet.send(source, draft, "ct-server")
-                print("Reassuring " .. message.source)
+                if source then
+                    rednet.send(source, draft, "ct-server")
+                    print("Reassuring " .. message.source)
+                end
                 sleep(3)
             else
                 coroutine.yield()
