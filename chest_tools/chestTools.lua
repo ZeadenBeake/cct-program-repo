@@ -595,8 +595,8 @@ elseif args[1] == "cache" then
         print("Caching is not enabled.")
     end
 elseif args[1] == "info" then
-    print("Version: 1.3.0")
-    print("Version date: 2025-10-3")
+    print("Version: 2.6.1")
+    print("Version date: 2025-10-23")
     print("Author: Zeaden Beake")
 elseif args[1] == "embed" then
     if args[2] == "start" then
@@ -643,3 +643,4 @@ if embed then
 end
 
 ::skip::
+
